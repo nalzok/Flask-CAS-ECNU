@@ -35,7 +35,8 @@ def login():
     redirect_url = create_cas_login_url(
         current_app.config['CAS_SERVER'],
         current_app.config['CAS_LOGIN_ROUTE'],
-        flask.url_for('.login', _external=True))
+        flask.url_for('.login', _external=True)
+    )
 
     if 'ticket' in flask.request.args:
         flask.session[cas_token_session_key] = flask.request.args['ticket']
@@ -114,20 +115,20 @@ def validate(ticket):
     try:
         xmldump = urlopen(cas_validate_url).read().strip().decode('utf8', 'ignore')
         xml_from_dict = parse(xmldump)
-        isValid = True if "cas:authenticationSuccess" in xml_from_dict["cas:serviceResponse"] else False
+        isValid = True if "sso:authenticationSuccess" in xml_from_dict["sso:serviceResponse"] else False
     except ValueError:
         current_app.logger.error("CAS returned unexpected result")
 
     if isValid:
         current_app.logger.debug("valid")
-        xml_from_dict = xml_from_dict["cas:serviceResponse"]["cas:authenticationSuccess"]
-        username = xml_from_dict["cas:user"]
-        attributes = xml_from_dict.get("cas:attributes", {})
+        xml_from_dict = xml_from_dict["sso:serviceResponse"]["sso:authenticationSuccess"]
+        username = xml_from_dict["sso:user"]
+        attributes = xml_from_dict.get("sso:attributes", {})
 
-        if "cas:memberOf" in attributes:
-            attributes["cas:memberOf"] = attributes["cas:memberOf"].lstrip('[').rstrip(']').split(',')
-            for group_number in range(0, len(attributes['cas:memberOf'])):
-                attributes['cas:memberOf'][group_number] = attributes['cas:memberOf'][group_number].lstrip(' ').rstrip(' ')
+        if "sso:memberOf" in attributes:
+            attributes["sso:memberOf"] = attributes["sso:memberOf"].lstrip('[').rstrip(']').split(',')
+            for group_number in range(0, len(attributes['sso:memberOf'])):
+                attributes['sso:memberOf'][group_number] = attributes['sso:memberOf'][group_number].lstrip(' ').rstrip(' ')
 
         flask.session[cas_username_session_key] = username
         flask.session[cas_attributes_session_key] = attributes
